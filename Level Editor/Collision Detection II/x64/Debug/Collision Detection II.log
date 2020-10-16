@@ -1,0 +1,5 @@
+﻿  Source.cpp
+C:\Users\Karma Tsukigami\Documents\Visual Studio 2019\Solution\Level Editor\Collision Detection II\Source.cpp(7,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+C:\Users\Karma Tsukigami\Documents\Visual Studio 2019\Solution\Level Editor\Collision Detection II\Source.cpp(19,15): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Karma Tsukigami\Documents\Visual Studio 2019\Solution\Level Editor\Collision Detection II\Source.cpp(20,15): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+  Collision Detection II.vcxproj -> C:\Users\Karma Tsukigami\Documents\Visual Studio 2019\Solution\Level Editor\x64\Debug\Collision Detection II.exe

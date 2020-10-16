@@ -1,0 +1,8 @@
+﻿  App.cpp
+C:\Users\Karma Tsukigami\Documents\Visual Studio 2019\Solution\Level Editor\Keyboard Input\App.cpp(28,64): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Karma Tsukigami\Documents\Visual Studio 2019\Solution\Level Editor\Keyboard Input\App.cpp(28,40): warning C4244: 'argument': conversion from 'T' to 'float', possible loss of data
+          with
+          [
+              T=unsigned int
+          ]
+  Keyboard Input.vcxproj -> C:\Users\Karma Tsukigami\Documents\Visual Studio 2019\Solution\Level Editor\x64\Debug\Keyboard Input.exe
