@@ -1,6 +1,9 @@
 #pragma once
 
 #include "SFML/graphics.hpp"
+//#include <string>
+//#include <iostream>
+//using namespace std;
 
 
 //global variables
@@ -37,6 +40,7 @@ private:
 	//speed variables
 	float speed;
 	
+	int xMultiplier;
 	int xSpeed;
 	int ySpeed;
 
@@ -45,6 +49,13 @@ private:
 	float brickWidth;
 	float brickHeight;
 
+	//text related
+	/*int bricksDestroyed;
+	string scoreText;
+
+	sf::Text gameOver;
+	sf::Text score;
+	sf::Color textColour; */
 
 	//gaps
 	float xEdgeGap;

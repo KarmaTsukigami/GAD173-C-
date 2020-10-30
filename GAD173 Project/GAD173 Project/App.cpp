@@ -5,9 +5,7 @@ App::App(const char* title, int screenWidth, int screenHeight, int screenBpp)
 {
 	window.create(sf::VideoMode(screenWidth, screenHeight, screenBpp), title);
 	window.setFramerateLimit(0);
-	view = window.getDefaultView();
-
-	
+	view = window.getDefaultView();	
 }
 
 //destructor
@@ -33,21 +31,21 @@ bool App::Init()
 	paddleCollidable = true;
 
 	//speed
+	xMultiplier = 2 * (rand() % 2) - 1;
 	speed = 350;
-	xSpeed = rand() % 100 + 300;
+	xSpeed = xMultiplier * rand() % 100 + 300;
 	ySpeed = -(rand() % 100 + 300);
 
 	//bricks
-	brickHeight = 30;
-	brickWidth = 60;
-	
+	brickHeight = 40;
+	brickWidth = 80;
+	//bricksDestroyed = 0;
 
 	//gaps
-	xGap = 10;
+	xGap = 20;
 	xEdgeGap = (window.getSize().x - COLS * brickWidth - (COLS - 1) * xGap) / 2;;
-	yGap = 20;
+	yGap = 30;
 	yEdgeGap = 40;
-
 
 	//collision
 	for (int row = 0; row < ROWS; ++row)
@@ -61,7 +59,22 @@ bool App::Init()
 		}
 	}
 	
-	
+	/* Trying to get text to work
+	//general text assign
+	textColour = sf::Color::White;
+
+	//text assign: gameOver
+	gameOver.setString("Game Over");
+	gameOver.setPosition((window.getSize().x / 2), (window.getSize().y / 2));
+	gameOver.setFillColor(textColour);
+	gameOver.setCharacterSize(30);
+
+	//text assign: score
+	score.setString("Score = " + to_string(bricksDestroyed));
+	score.setPosition((window.getSize().x / 2), 0);
+	score.setFillColor(textColour);
+	score.setCharacterSize(20);
+	*/
 
 	return true;
 }
@@ -115,6 +128,7 @@ void App::Update()
 		//ball.setPosition((window.getSize().x / 2) - ballRadius, (window.getSize().y / 2) - ballRadius);
 		ySpeed = 0;
 		xSpeed = 0;
+		//cout << gameOver << endl;
 	}
 	
 	if (ball.getGlobalBounds().intersects(paddle.getGlobalBounds()) && paddleCollidable)
@@ -126,6 +140,7 @@ void App::Update()
 	{
 		xSpeed = -xSpeed;
 		ySpeed = -ySpeed;
+		//bricksDestroyed += 1;
 		isHit = false;
 	}
 	// detect collision with collidable brick 
