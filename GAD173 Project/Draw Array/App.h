@@ -1,5 +1,9 @@
 #pragma once
 #include "SFML/Graphics.hpp"
+#include <iostream>
+#include <fstream>
+
+using namespace std;
 
 const int ROWS = 3;
 const int COLS = 7;
@@ -35,4 +39,13 @@ private:
 
 	// declare a 2D array of bricks
 	sf::RectangleShape bricks[ROWS][COLS];
+	sf::RectangleShape** b;
+	bool** c;
+	int** r;
+	bool** col;
+
+
+	ofstream myfile;
+	//int MethodName(float z);
 };
+

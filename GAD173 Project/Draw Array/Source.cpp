@@ -3,8 +3,7 @@
 
 int main()
 {
-	
-    App game("Level Editor", 800, 600, 32);
+	App game("Level Editor", 800, 600, 32);
 
     if (!game.Init())
     {
@@ -16,6 +15,7 @@ int main()
     {
         game.Run();
     }
+
     return 0;
 }
 
