@@ -513,7 +513,7 @@ bool App::Init()
 		readmeWrite.close();
 	}
 
-	cout << spawnLocation << endl;
+	//cout << spawnLocation << endl;
 
 	return true;
 }
@@ -585,7 +585,7 @@ void App::Update()
 	if (ball.getGlobalBounds().intersects(paddleSprite.getGlobalBounds()) && paddleCollidable) {
 		ySpeed = -ySpeed;
 		paddleAudio.play();
-		cout << totalBricks << endl;
+		//cout << totalBricks << endl;
 	}
 
 	if (isHit == true) {
@@ -817,8 +817,8 @@ void App::Draw()
 		}
 		window.draw(saves[1]);
 		window.draw(save[1]);
-		window.draw(saves[2]);
-		window.draw(save[2]);
+		//window.draw(saves[2]);
+		//window.draw(save[2]);
 	}
 	if (paused == true && lives > 0) {
 		window.draw(continueButton);
@@ -867,7 +867,7 @@ void App::HandleEvents()
 			customMenu = false;
 			gameClock.restart();
 			powerupClock.restart();
-			cout << totalBricks << endl;
+			//cout << totalBricks << endl;
 		}
 		if (customButton.getGlobalBounds().contains(sf::Vector2f(localPosition)) && inMenu == true) {
 			buttonAudio.play();
