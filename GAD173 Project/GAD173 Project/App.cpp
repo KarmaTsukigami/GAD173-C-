@@ -20,12 +20,12 @@ App::~App()
 
 	//release memory: pointer array for bricks
 	for (int i = 0; i < rowValue; ++i) {
-		delete[] b[i];
-		delete[] c[i];
+		delete[] s[i];
+		delete[] t[i];
 	}
 
-	delete[] b;
-	delete[] c;
+	delete[] s;
+	delete[] t;
 	
 	/*
 	//release memory: pointer array for menu
@@ -43,6 +43,8 @@ App::~App()
 
 bool App::Init()
 {
+	srand(time(NULL));
+
 	//initialise with writing to and reading files
 	if (customValue != true && restarted != true) {
 		customValue = false;
@@ -89,6 +91,26 @@ bool App::Init()
 			cout << "Unable to open file";
 		}
 	}
+
+	/*
+	if (customValue == true && customRowValues == true) {
+		customOneRead.open("customRows.txt");
+		// open
+		if (customOneRead.is_open()) {//start method, its initialising and only needs to be called in the first frame
+			// read from file
+			while (!customOneRead.eof()) {
+				// only works with tab separated values
+				customOneRead >> customRowOne >> customRowTwo >> customRowThree;
+
+				//cout << rowValue << "\t" << colValue << endl;
+
+				customOneRead.close();
+			}
+		}
+		else {
+			cout << "Unable to open file";
+		}
+	}*/
 	
 	//Init Reset
 	restartInit = false;
@@ -101,23 +123,24 @@ bool App::Init()
 	isHit = false;
 
 	//paddle
-	paddleLength = 150.0f;
+	paddleWidth = 150.0f;
 	paddleHeight = 20.0f;
-	paddle.setSize(sf::Vector2f(paddleLength, paddleHeight));
-	paddle.setPosition(window.getSize().x / 2, window.getSize().y * 0.9);
-	paddle.setFillColor(sf::Color::Magenta);
+	//paddle.setSize(sf::Vector2f(paddleLength, paddleHeight));
+	//paddle.setPosition(window.getSize().x / 2, window.getSize().y * 0.9);
+	//paddle.setFillColor(sf::Color::Magenta);
 	paddleCollidable = true;
 
 	//speed
 	xMultiplier = 2 * (rand() % 2) - 1;
 	speed = 350;
-	xSpeed = xMultiplier * rand() % 100 + 300;
+	xSpeed = xMultiplier * (rand() % 100 + 300);
 	ySpeed = -(rand() % 100 + 300);
 
 	//bricks
 	brickHeight = 40;
 	brickWidth = 80;
 	bricksDestroyed = 0;
+	totalBricks = 0;
 
 	//gaps
 	xGap = 20;
@@ -159,6 +182,9 @@ bool App::Init()
 	livesToggle = false;
 	livesWatch = false;
 
+	//Winning the Game
+	gameWin = false;
+
 	//text
 	if (!font.loadFromFile("arial.ttf")) {
 		std::cout << "cannot load font" << std::endl;
@@ -167,6 +193,7 @@ bool App::Init()
 	score.setFont(font);
 	continueText.setFont(font);
 	livesCount.setFont(font);
+	wonGame.setFont(font);
 	
 	textColour = sf::Color(238, 130, 238, 255);
 	//textColour = sf::Color::Red;
@@ -190,6 +217,11 @@ bool App::Init()
 	
 	livesCount.setPosition((window.getSize().x / 2), (window.getSize().y / 2) + buttonHeight + yGap);
 	livesCount.setFillColor(textColour);
+	
+	//text assign: won game
+	wonGame.setString("You win");
+	wonGame.setPosition((window.getSize().x / 2), (window.getSize().y / 2));
+	wonGame.setFillColor(textColour);
 
 	//Background
 	if (!backgroundImage.loadFromFile("basic bg.png"))
@@ -201,12 +233,62 @@ bool App::Init()
 	backgroundSprite.setScale(/*window.getSize().x, window.getSize().y*/ float(window.getSize().x) / backgroundTexture.getSize().x, float(window.getSize().y) / backgroundTexture.getSize().y);
 
 	//brick texture
-	/*if (!texture.loadFromFile("brick texture.png"))
-	{
+	if (!texture.loadFromFile("brick texture.png"))	{
 		cout << "Unable to load texture" << endl;
-	} */
+	} 
+
+	//paddle texture
+	if (!paddleTexture.loadFromFile("paddle texture.png")) {
+		cout << "Unable to load texture" << endl;
+	}
+	paddleSprite.setScale(paddleWidth / paddleTexture.getSize().x, paddleHeight / paddleTexture.getSize().y);
+	paddleSprite.setPosition(window.getSize().x / 2, window.getSize().y * 0.9);
+	paddleSprite.setTexture(paddleTexture);
 	
-	//collision
+	//Simple AI (Leaf) texture
+	if (!leafTexture.loadFromFile("leaf animation line.png"))
+	{
+		std::cout << "Unable to load image" << std::endl;
+	}
+
+	
+	leafWidth = leafTexture.getSize().x / 8;
+	leafHeight = leafTexture.getSize().y;
+
+	rect = sf::IntRect(0, 0, leafWidth, leafHeight);
+	leafSprite = sf::Sprite(leafTexture, rect);
+	leafSprite.scale(1, 1);
+	leafSprite.setPosition(window.getSize().x / 2, window.getSize().y / 3);
+	leafSpeed = 350.0f;
+
+	//Powerups
+	powerupWidth = 50.0f;
+	powerupHeight = 50.0f;
+	powerupSpeed = 200.0f;
+	powerupSpawned = false;
+	lifeSpawned = false;
+	paddleSpawned = false;
+	enlargedPaddle = false;
+	spawnLocation = (rand() % 5) + 1;
+	powerupChoice = (rand() % 2) + 1;
+
+	if (!powerupLife.loadFromFile("powerup (life).png"))
+	{
+		std::cout << "Unable to load image" << std::endl;
+	}
+	powerupLifeSprite.setTexture(powerupLife);
+	powerupLifeSprite.setScale(powerupWidth / powerupLife.getSize().x, powerupHeight / powerupLife.getSize().y);
+	powerupLifeSprite.setPosition(window.getSize().x / spawnLocation, 0);
+
+	if (!powerupPaddle.loadFromFile("powerup (paddle).png"))
+	{
+		std::cout << "Unable to load image" << std::endl;
+	}
+	powerupPaddleSprite.setTexture(powerupPaddle);
+	powerupPaddleSprite.setScale(powerupWidth / powerupPaddle.getSize().x, powerupHeight / powerupPaddle.getSize().y);	
+	powerupPaddleSprite.setPosition(window.getSize().x / spawnLocation, 0);
+
+	//collision (old version - rectangle bricks)
 	/*for (int row = 0; row < ROWS; ++row)
 	{
 		for (int col = 0; col < COLS; ++col)
@@ -221,7 +303,7 @@ bool App::Init()
 	//writeFile.open("brickPos.txt");
 	//readFile.open("brickPos.txt");
 
-
+	/*
 	b = new sf::RectangleShape * [rowValue];
 	c = new bool* [rowValue];
 
@@ -242,6 +324,86 @@ bool App::Init()
 			//b[row][col].setTexture(texture);
 		}
 	}
+	*/
+
+	//Brick Array (non custom)
+	//if (customValue == false) {
+	s = new sf::Sprite * [rowValue];
+		t = new bool* [rowValue];
+
+		for (int i = 0; i < rowValue; ++i) {
+			s[i] = new sf::Sprite[colValue];
+			t[i] = new bool[colValue];
+		}
+
+	//Setup the Array of Bricks
+	for (int row = 0; row < rowValue; ++row) {
+
+		for (int col = 0; col < colValue; ++col) {
+
+			//For every Row and Column (or for every brick)
+			s[row][col].setScale(sf::Vector2f(brickWidth / texture.getSize().x, brickHeight / texture.getSize().y));
+			s[row][col].setTexture(texture);
+			s[row][col].setPosition(xEdgeGap + col * (brickWidth + xGap), yEdgeGap + row * (brickHeight + yGap));
+			t[row][col] = true;
+
+			totalBricks++;
+			//b[row][col].setTexture(texture);
+		}
+	}
+	//}
+
+	/*
+	//Brick Array (custom)
+	if (customValue == true) {
+		s = new sf::Sprite * [ROWS];
+		t = new bool* [ROWS];
+
+		for (int i = 0; i < ROWS; ++i) {
+			s[0] = new sf::Sprite[customRowOne];
+			t[0] = new bool[customRowOne];
+			s[1] = new sf::Sprite[customRowTwo];
+			t[1] = new bool[customRowTwo];
+			s[2] = new sf::Sprite[customRowThree];
+			t[2] = new bool[customRowThree];
+		}
+
+
+		//Setup the Array of Bricks
+		for (int row = 0; row < ROWS; ++row) {
+
+			for (int col = 0; col < customRowOne; ++col) {
+				//For every Row and Column (or for every brick)
+				s[0][col].setScale(sf::Vector2f(brickWidth / texture.getSize().x, brickHeight / texture.getSize().y));
+				s[0][col].setTexture(texture);
+				s[0][col].setPosition(xEdgeGap + col * (brickWidth + xGap), yEdgeGap + row * (brickHeight + yGap));
+				t[0][col] = true;
+				totalBricks++;
+
+				//b[row][col].setTexture(texture);
+			}
+			for (int col = 0; col < customRowTwo; ++col) {
+				//For every Row and Column (or for every brick)
+				s[1][col].setScale(sf::Vector2f(brickWidth / texture.getSize().x, brickHeight / texture.getSize().y));
+				s[1][col].setTexture(texture);
+				s[1][col].setPosition(xEdgeGap + col * (brickWidth + xGap), yEdgeGap + row * (brickHeight + yGap));
+				t[1][col] = true;
+				totalBricks++;
+
+				//b[row][col].setTexture(texture);
+			}
+			for (int col = 0; col < customRowThree; ++col) {
+				//For every Row and Column (or for every brick)
+				s[2][col].setScale(sf::Vector2f(brickWidth / texture.getSize().x, brickHeight / texture.getSize().y));
+				s[2][col].setTexture(texture);
+				s[2][col].setPosition(xEdgeGap + col * (brickWidth + xGap), yEdgeGap + row * (brickHeight + yGap));
+				t[2][col] = true;
+				totalBricks++;
+
+				//b[row][col].setTexture(texture);
+			}
+		}
+	} */
 
 	for (int i = 0; i < menuItems; ++i) {
 		menuText[i].setFillColor(textColour);
@@ -268,7 +430,10 @@ bool App::Init()
 		slots[i].setFont(font);
 		slots[i].setPosition(50 + (buttonWidth / 2), yEdgeGap + i * (buttonHeight + yGap));
 		slots[0].setString("Default");
-		slots[1].setString("Custom");
+		slots[1].setString("Custom Values");
+		//slots[2].setString("Custom Rows");
+		slots[1].setPosition(50, yEdgeGap + (buttonHeight + yGap));
+		//slots[2].setPosition(50, yEdgeGap + 2 * (buttonHeight + yGap));
 
 		save[i].setFillColor(textColour);
 		save[i].setFont(font);
@@ -319,10 +484,22 @@ bool App::Init()
 		return -1;
 	}
 
+	if (!leafBuffer.loadFromFile("leaf.wav")) {
+		std::cout << "sound not loaded\n";
+		return -1;
+	}
+
+	if (!powerupBuffer.loadFromFile("powerup.wav")) {
+		std::cout << "sound not loaded\n";
+		return -1;
+	}
+
 	brickAudio.setBuffer(brickBuffer);
 	buttonAudio.setBuffer(buttonBuffer);
 	paddleAudio.setBuffer(paddleBuffer);
 	wallAudio.setBuffer(wallBuffer);
+	leafAudio.setBuffer(leafBuffer);
+	powerupAudio.setBuffer(powerupBuffer);
 
 	//cout << lives << endl;
 
@@ -335,6 +512,8 @@ bool App::Init()
 			<< "Note: I recommend keeping the number of rows to 4 or less, it may become too difficult otherwise, as well as less than 8 columns.";
 		readmeWrite.close();
 	}
+
+	cout << spawnLocation << endl;
 
 	return true;
 }
@@ -350,15 +529,15 @@ void App::Update()
 	//update
 	// move Paddle left, frame rate independent
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-		if (paddle.getPosition().x > 0) {
-			paddle.move(-speed * deltaTime, 0);
+		if (paddleSprite.getPosition().x > 0) {
+			paddleSprite.move(-speed * deltaTime, 0);
 		}
 	}
 
 	// move Paddle right, frame rate independent
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-		if (paddle.getPosition().x < window.getSize().x - paddleLength)	{
-			paddle.move(speed * deltaTime, 0); //the defining feature which makes this framerate independent
+		if (paddleSprite.getPosition().x < window.getSize().x - paddleWidth)	{
+			paddleSprite.move(speed * deltaTime, 0); //the defining feature which makes this framerate independent
 		}
 	}
 
@@ -392,7 +571,7 @@ void App::Update()
 			//cout << lives << endl;
 		}
 
-		else if (lives <= 3) {
+		else if (lives > 0) {
 			paused = true;
 			if (livesWatch == false) {
 				--lives;
@@ -403,15 +582,15 @@ void App::Update()
 	}
 	
 	//paddle collision
-	if (ball.getGlobalBounds().intersects(paddle.getGlobalBounds()) && paddleCollidable) {
+	if (ball.getGlobalBounds().intersects(paddleSprite.getGlobalBounds()) && paddleCollidable) {
 		ySpeed = -ySpeed;
 		paddleAudio.play();
+		cout << totalBricks << endl;
 	}
 
 	if (isHit == true) {
 		xSpeed = -xSpeed;
 		ySpeed = -ySpeed;
-		bricksDestroyed += 1;
 		brickAudio.play();
 		isHit = false;
 	}
@@ -420,11 +599,12 @@ void App::Update()
 
 	for (int row = 0; row < rowValue; ++row) {
 		for (int col = 0; col < colValue; ++col) {
-			if (ball.getGlobalBounds().intersects(b[row][col].getGlobalBounds()) && c[row][col] == true) {
+			if (ball.getGlobalBounds().intersects(s[row][col].getGlobalBounds()) && t[row][col] == true) {
 				// destroy the brick
-				c[row][col] = false;
+				t[row][col] = false;
 				isHit = true;
-
+				bricksDestroyed += 1;
+				totalBricks-= 1;
 				//The below code didn't work for me, so I wrote it differently.
 				/*
 				// left or right border
@@ -453,8 +633,111 @@ void App::Update()
 	}
 	
 	// move the ball 
-	if (inMenu == false && paused == false) {
+	if (inMenu == false && paused == false && gameWin == false) {
 		ball.move(xSpeed * deltaTime, ySpeed * deltaTime);
+	}
+
+	if (totalBricks == 0) {
+		//Run 'Win' function
+		gameWin = true;
+	}
+
+	//Leaf Animation + AI
+	if (gameClock.getElapsedTime().asSeconds() > 1.0f) {
+		rect.left += 64;
+
+		leafSprite.setTextureRect(rect);
+		gameClock.restart();
+	}
+
+	if (rect.left == 448){
+		//reset the animation
+		rect.left = -64;
+	}
+
+	//move the leaf
+	if (inMenu == false && paused == false && gameWin == false) {
+		leafSprite.move(leafSpeed * deltaTime, 0);
+	}
+
+	if (leafSprite.getPosition().x >= window.getSize().x - leafWidth) {
+		leafSpeed = -leafSpeed;
+	}
+
+	if (leafSprite.getPosition().x <= 0) {
+		leafSpeed = -leafSpeed;
+	}
+
+	if (ball.getGlobalBounds().intersects(leafSprite.getGlobalBounds())) {
+		ySpeed = -ySpeed;
+		xSpeed = -xSpeed;
+		leafAudio.play();
+	}
+
+	//spawn powerups and collisions
+	if (powerupSpawned == false && inMenu == false && paused == false) {
+		if (powerupClock.getElapsedTime().asSeconds() > 8.0f /*&& powerupSpawned == false*/) {
+			powerupSpawned = true;
+			if (powerupChoice == 1 && lifeSpawned == false)	{
+				//life powerup
+				lifeSpawned = true;
+			}
+			if (powerupChoice == 2 && paddleSpawned == false) {
+				//paddle powerup
+				paddleSpawned = true;
+			}
+
+			//reset the random variables
+			spawnLocation = (rand() % 10) + 1;
+			powerupChoice = (rand() % 2) + 1;
+		}
+	}
+
+	//Lives Powerup
+	if (lifeSpawned == true && inMenu == false && paused == false && gameWin == false) {
+		powerupLifeSprite.move(0, powerupSpeed * deltaTime);
+	}
+	if (powerupLifeSprite.getPosition().y >= window.getSize().y - powerupHeight) {
+		lifeSpawned = false;
+		powerupSpawned = false;
+		powerupClock.restart();
+		powerupLifeSprite.setPosition(window.getSize().x / spawnLocation, 0);
+	}
+	if (powerupLifeSprite.getGlobalBounds().intersects(paddleSprite.getGlobalBounds()) && lifeSpawned == true) {
+		lifeSpawned = false;
+		powerupSpawned = false;
+		powerupClock.restart();
+		powerupLifeSprite.setPosition(window.getSize().x / spawnLocation, 0);
+		powerupAudio.play();
+		lives++;
+		//powerupTimer.restart();
+	}
+
+	//Paddle Powerup
+	if (paddleSpawned == true && inMenu == false && paused == false && gameWin == false) {
+		powerupPaddleSprite.move(0, powerupSpeed * deltaTime);
+	}
+	if (powerupPaddleSprite.getPosition().y >= window.getSize().y - powerupHeight) {
+		paddleSpawned = false;
+		powerupSpawned = false;
+		powerupClock.restart();
+		powerupPaddleSprite.setPosition(window.getSize().x / spawnLocation, 0);
+	}
+	if (powerupPaddleSprite.getGlobalBounds().intersects(paddleSprite.getGlobalBounds()) && paddleSpawned == true) {
+		paddleSpawned = false;
+		powerupSpawned = false;
+		powerupClock.restart();
+		powerupPaddleSprite.setPosition(window.getSize().x / spawnLocation, 0);
+		powerupAudio.play();
+		powerupTimer.restart();
+		paddleWidth += 50;
+		enlargedPaddle = true;
+		paddleSprite.setScale(paddleWidth / paddleTexture.getSize().x, paddleHeight / paddleTexture.getSize().y);
+	}
+	if (enlargedPaddle == true && powerupTimer.getElapsedTime().asSeconds() > 4.0f) {
+		enlargedPaddle = false;
+		paddleWidth -= 50;
+		paddleSprite.setScale(paddleWidth / paddleTexture.getSize().x, paddleHeight / paddleTexture.getSize().y);
 	}
 
 }
@@ -468,20 +751,52 @@ void App::Draw()
 	window.draw(backgroundSprite);
 	if (startPressed == true) {
 		window.draw(ball);
-		window.draw(paddle);
+		window.draw(paddleSprite);
 		window.draw(score);
+		//if (customValue == false) {
 		for (int row = 0; row < rowValue; ++row)
 		{
 			for (int col = 0; col < colValue; ++col)
 			{
-				if (c[row][col])
+				if (t[row][col])
 				{
-					window.draw(b[row][col]);
+					window.draw(s[row][col]);
+					//totalBricks++;
 				}
 			}
 		}
+		//}
+		/*if (customValue == true) {
+			for (int row = 0; row < ROWS; ++row)
+			{
+				for (int col = 0; col < customRowOne; ++col)
+				{
+					if (t[0][col])
+					{
+						window.draw(s[0][col]);
+						//totalBricks++;
+					}
+				}
+				for (int col = 0; col < customRowTwo; ++col)
+				{
+					if (t[1][col])
+					{
+						window.draw(s[1][col]);
+						//totalBricks++;
+					}
+				}
+				for (int col = 0; col < customRowThree; ++col)
+				{
+					if (t[2][col])
+					{
+						window.draw(s[2][col]);
+						//totalBricks++;
+					}
+				}
+			}
+		}*/
 		inMenu = false;
-		
+		window.draw(leafSprite);
 	}
 	if (inMenu == true) {
 		window.draw(startButton);
@@ -502,6 +817,8 @@ void App::Draw()
 		}
 		window.draw(saves[1]);
 		window.draw(save[1]);
+		window.draw(saves[2]);
+		window.draw(save[2]);
 	}
 	if (paused == true && lives > 0) {
 		window.draw(continueButton);
@@ -514,6 +831,16 @@ void App::Draw()
 	}
 	if (restartInit == true) {
 		window.clear();
+	}
+	if (gameWin == true && inMenu == false) {
+		window.draw(menuButton);
+		window.draw(wonGame);
+	}
+	if (lifeSpawned == true) {
+		window.draw(powerupLifeSprite);
+	}
+	if (paddleSpawned == true) {
+		window.draw(powerupPaddleSprite);
 	}
 
 	window.display();
@@ -538,6 +865,9 @@ void App::HandleEvents()
 			window.clear();
 			startPressed = true;
 			customMenu = false;
+			gameClock.restart();
+			powerupClock.restart();
+			cout << totalBricks << endl;
 		}
 		if (customButton.getGlobalBounds().contains(sf::Vector2f(localPosition)) && inMenu == true) {
 			buttonAudio.play();
@@ -561,7 +891,7 @@ void App::HandleEvents()
 			buttonAudio.play();
 			//cout << "Hello World 5!" << endl; //app.cpp
 			paused = false;
-			paddle.setPosition(window.getSize().x / 2, window.getSize().y * 0.9);
+			paddleSprite.setPosition(window.getSize().x / 2, window.getSize().y * 0.9);
 			ball.setPosition((window.getSize().x / 2) + ballRadius, (window.getSize().y / 2) + ballRadius);
 			ySpeed = -ySpeed;
 			livesWatch = false;
@@ -579,6 +909,22 @@ void App::HandleEvents()
 			colrowWrite << ROWS << "\t" << COLS << "\t" << defineRow << "\t" << defineCol << "\n";
 			colrowWrite.close();
 		}
+		/*
+		if (saves[2].getGlobalBounds().contains(sf::Vector2f(localPosition)) && customMenu == true) {
+			buttonAudio.play();
+			//cout << "Hello World 6!" << endl; //app.cpp
+
+			cout << "Please enter an integer for the number of bricks in the first row:";
+			cin >> customRowOne;
+			cout << "Please enter an integer for the number of bricks in the second row:";
+			cin >> customRowTwo;
+			cout << "Please enter an integer for the number of bricks in the third row:";
+			cin >> customRowThree;
+
+			colrowWrite.open("customRows.txt");
+			colrowWrite << customRowOne << "\t" << customRowTwo << "\t" << customRowTwo << "\n";
+			colrowWrite.close();
+		}*/
 		if (loads[0].getGlobalBounds().contains(sf::Vector2f(localPosition)) && customMenu == true) {
 			buttonAudio.play();
 			//cout << "Hello World 7!" << endl; //app.cpp
@@ -586,6 +932,7 @@ void App::HandleEvents()
 			restartInit = true;
 			restarted = true;
 			customMenu = false;
+			//customRowValues = false;
 		}
 		if (loads[1].getGlobalBounds().contains(sf::Vector2f(localPosition)) && customMenu == true) {
 			buttonAudio.play();
@@ -594,6 +941,25 @@ void App::HandleEvents()
 			restartInit = true;
 			restarted = true;
 			customMenu = false;
+			//customRowValues = false;
+		}
+		/*
+		if (loads[2].getGlobalBounds().contains(sf::Vector2f(localPosition)) && customMenu == true) {
+			buttonAudio.play();
+			//cout << "Hello World 7!" << endl; //app.cpp
+			customValue = true;
+			restartInit = true;
+			restarted = true;
+			customMenu = false;
+			//customRowValues = true;
+		}*/
+		if (menuButton.getGlobalBounds().contains(sf::Vector2f(localPosition)) && gameWin == true) {
+			buttonAudio.play();
+			//cout << "Hello World 8!" << endl; //app.cpp
+			window.clear();
+			startPressed = false;
+			restartInit = true;
+			restarted = true;
 		}
 	}
 }

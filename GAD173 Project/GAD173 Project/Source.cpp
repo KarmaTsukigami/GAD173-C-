@@ -2,7 +2,7 @@
 
 int main()
 {
-    App game("Level Editor", 800, 800, 32);
+    App game("Level Editor", 800, 900, 32);
 
     if (!game.Init())
     {

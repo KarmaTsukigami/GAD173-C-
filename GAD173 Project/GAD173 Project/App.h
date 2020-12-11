@@ -5,8 +5,9 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <random>
+#include <time.h>
 using namespace std;
-
 
 //global variables
 //declare an array of bricks
@@ -27,12 +28,18 @@ private:
 	sf::RenderWindow window;
 	sf::View view;
 
+	sf::Clock gameClock;
+	sf::Clock powerupClock;
+	sf::Clock powerupTimer;
+
 	//other data members
 
 	//bricks
 	//sf::RectangleShape brick[rowValue][colValue];
-	sf::RectangleShape** b;
-	bool** c;
+	//sf::RectangleShape** b;
+	sf::Sprite** s;
+	//bool** c;
+	bool** t; //texture's collidable bool pointer as a pair with s
 	int rowValue;
 	int colValue;
 	int customRow;
@@ -45,8 +52,8 @@ private:
 	//bool collidable[ROWS][COLS];
 
 	//paddle specifications
-	sf::RectangleShape paddle;
-	float paddleLength;
+	//sf::RectangleShape paddle;
+	float paddleWidth;
 	float paddleHeight;
 	bool paddleCollidable;
 
@@ -71,9 +78,12 @@ private:
 
 	//text related
 	int bricksDestroyed;
+	int totalBricks;
+	bool gameWin;
 
 	sf::Font font;
 	sf::Text gameOver;
+	sf::Text wonGame;
 	sf::Text score;
 	sf::Text menuText[menuItems];
 	sf::Text continueText;
@@ -96,6 +106,8 @@ private:
 	ofstream colrowWrite;
 	ifstream colrowRead;
 	ofstream readmeWrite;
+	ofstream customOne;
+	ifstream customOneRead;
 
 	//Buttons
 	sf::Vector2i localPosition;
@@ -118,9 +130,38 @@ private:
 	sf::Texture backgroundTexture;
 	sf::Sprite backgroundSprite;
 
-	/*//Brick Texture
+	//Brick Texture
 	sf::Texture texture;
-	sf::Sprite sprite; */
+
+	//Paddle Texture
+	sf::Texture paddleTexture;
+	sf::Sprite paddleSprite;
+
+	//Leaf Texture
+	sf::Texture leafTexture;
+	sf::IntRect rect;
+	sf::Sprite leafSprite;
+
+	float leafWidth;
+	float leafHeight;
+	float leafSpeed;
+
+	//Powerups
+	sf::Texture powerupLife;
+	sf::Texture powerupPaddle;
+	sf::Sprite powerupLifeSprite;
+	sf::Sprite powerupPaddleSprite;
+
+	bool enlargedPaddle;
+	bool powerupSpawned;
+	bool lifeSpawned;
+	bool paddleSpawned;
+
+	float powerupWidth;
+	float powerupHeight;
+	float powerupSpeed;
+	int powerupChoice;
+	int spawnLocation;
 
 	//Saving and Loading
 	sf::RectangleShape saves[totalSaves];
@@ -138,11 +179,24 @@ private:
 	sf::Sound paddleAudio;
 	sf::SoundBuffer wallBuffer;
 	sf::Sound wallAudio;
+	sf::SoundBuffer leafBuffer;
+	sf::Sound leafAudio;
+	sf::SoundBuffer powerupBuffer;
+	sf::Sound powerupAudio;
 
 	//other private methods
 	int lives;
 	bool livesToggle;
 	bool livesWatch;
+
+	/*
+	//testing for level editor
+	int customRowOne;
+	int customRowTwo;
+	int customRowThree;
+	bool customRowValues;
+	*/
+
 
 public:
 	App(const char* title, int screenWidth, int screenHeight, int screenBpp);
